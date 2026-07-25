@@ -304,7 +304,7 @@ function toggleNpc(i){
 //   erased  -> reset (reset + curse)
 async function setTier(tier,id){
   const map={
-    watched:{action:'unban',confirm:`Turunkan ${id} ke WATCHED?\n(lepas dari daftar ban — curse di device tetap perlu kode UNBAN ver-4)`},
+    watched:{action:'watched',confirm:`Turunkan ${id} ke WATCHED?\nMelepas MARK + BAN sekaligus.\n(curse yang sudah nempel di device tetap perlu kode UNBAN ver-4)`},
     marked :{action:'mark', label:'MARKED', reasonDefault:'perilaku mencurigakan'},
     cursed :{action:'ban',  label:'CURSED', reasonDefault:'exploit terverifikasi', confirm:`Kutuk ${id}? Progres pemain akan dibekukan.`},
     erased :{action:'reset',label:'ERASED', reasonDefault:'exploit berat', confirm:`ERASE ${id}?\nProgres DIHAPUS lalu dikutuk. TIDAK bisa dibatalkan.`}
