@@ -249,7 +249,7 @@ function statusOf(p){
   const nid=p.id.toUpperCase().replace(/[^A-Z0-9]/g,'');
   if(DATA.resets.some(r=>r.id===nid))return{cls:'reset',txt:'ERASED',tier:'erased'};
   if(DATA.bans.some(b=>b.id===nid))return{cls:'banned',txt:'CURSED',tier:'cursed'};
-  if((DATA.marks||[]).some(m=>m.id===nid))return{cls:'marked',txt:'MARKED',tier:'marked'};
+  if((DATA.marks||[]).some(m=>m.id===nid && m.reason!=='-unmark'))return{cls:'marked',txt:'MARKED',tier:'marked'};
   if((p.note||"").indexOf("ROLLBACK")===0)return{cls:'rollback',txt:'ROLLBACK',tier:'watched'};
   return{cls:'clean',txt:'WATCHED',tier:'watched'};
 }
