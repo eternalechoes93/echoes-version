@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EOE — Panel Moderasi</title>
+<style>
+  /* ═══ FONT GAME EOE ═══
+     Taruh TESLA.ttf dan BankGothic_Md_BT.ttf DI FOLDER YANG SAMA dengan file
+     dashboard.html ini (kalau di GitHub Pages, upload dua .ttf itu ke repo yang
+     sama). Kalau font gagal dimuat, dashboard otomatis jatuh ke font sistem —
+     tetap jalan, cuma tampilannya beda. */
+  @font-face{
+    font-family:'EOEHead'; font-display:swap;
+    src:url('TESLA.ttf') format('truetype');
+  }
+  @font-face{
+    font-family:'EOEUI'; font-display:swap;
+    src:url('BankGothic_Md_BT.ttf') format('truetype');
+  }
+  :root{
+    --cyan:#28E7F0; --cyan-dim:#1BA5AD; --coral:#FF6B3D; --gold:#FFD87A;
+    --bg:#040A0E; --panel:#08131A; --panel2:#0B1B24;
+    --line:#123240; --line-bright:#1E5566; --txt:#B9E8ED; --dim:#4E7686;
+    --crit:#FF4D5E; --warn:#FFB020; --ok:#2EE6A6;
+    --glow:0 0 12px rgba(40,231,240,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:
+      linear-gradient(rgba(40,231,240,.02) 1px,transparent 1px) 0 0/100% 3px,
+      radial-gradient(1000px 500px at 82% -12%, rgba(40,231,240,.07), transparent),
+      radial-gradient(700px 400px at -5% 108%, rgba(255,107,61,.05), transparent),
+      var(--bg);
+    color:var(--txt); font-family:'EOEUI','Segoe UI',system-ui,sans-serif;
+    min-height:100vh; padding:16px; letter-spacing:1px;
+  }
+  .wrap{max-width:1220px;margin:0 auto}
+
+  /* sudut bracket ala KEYGEN */
+  .bracket{position:relative}
+  .bracket::before,.bracket::after{
+    content:'';position:absolute;width:14px;height:14px;pointer-events:none}
+  .bracket::before{top:-1px;left:-1px;border-top:2px solid var(--coral);border-left:2px solid var(--coral)}
+  .bracket::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--coral);border-right:2px solid var(--coral)}
+
+  header{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:20px 22px;margin-bottom:18px;border-radius:4px;
+    background:linear-gradient(135deg,rgba(40,231,240,.06),rgba(255,107,61,.03));
+    border:1px solid var(--line-bright);
+  }
+  header h1{
+    font-family:'EOEHead','Orbitron',sans-serif;
+    font-size:24px;font-weight:400;letter-spacing:6px;color:var(--cyan);
+    text-shadow:var(--glow);
+  }
+  header .tag{font-size:11px;color:var(--dim);letter-spacing:4px;margin-top:4px}
+  .spacer{flex:1}
+  .ver{font-family:'EOEHead',monospace;font-size:11px;color:var(--cyan);
+    border:1px solid var(--line-bright);padding:5px 12px;border-radius:2px;letter-spacing:2px}
+
+  #gate{max-width:440px;margin:11vh auto 0}
+  #gate .box{background:var(--panel);border:1px solid var(--line-bright);border-radius:4px;padding:30px;text-align:center}
+  #gate .kicker{font-size:11px;color:var(--cyan);letter-spacing:5px;border:1px solid var(--line-bright);
+    display:inline-block;padding:7px 16px;border-radius:2px;margin-bottom:22px}
+  #gate h2{font-family:'EOEHead','Orbitron',sans-serif;color:var(--cyan);letter-spacing:7px;
+    font-size:30px;font-weight:400;margin-bottom:6px;text-shadow:var(--glow)}
+  #gate p{color:var(--dim);font-size:11px;letter-spacing:3px;margin-bottom:24px}
+  input,button,select{font-family:inherit}
+  .fld{width:100%;padding:13px 15px;background:var(--bg);border:1px solid var(--line);
+    border-radius:2px;color:var(--txt);font-size:14px;outline:none;letter-spacing:1px}
+  .fld:focus{border-color:var(--cyan);box-shadow:var(--glow)}
+  .fld::placeholder{color:var(--dim);letter-spacing:2px}
+  .btn{padding:12px 20px;border:1px solid transparent;border-radius:2px;font-weight:700;cursor:pointer;
+    letter-spacing:2px;font-size:12px;font-family:'EOEUI',sans-serif;transition:filter .15s,transform .1s,box-shadow .15s}
+  .btn:active{transform:translateY(1px)}
+  .btn-cyan{background:transparent;border-color:var(--cyan);color:var(--cyan)}
+  .btn-cyan:hover{box-shadow:var(--glow);background:rgba(40,231,240,.08)}
+  .btn-ghost{background:transparent;border:1px solid var(--line-bright);color:var(--dim)}
+  .btn-ghost:hover{color:var(--cyan);border-color:var(--cyan)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:16px}
+  .card .n{font-family:'EOEHead','Orbitron',monospace;font-size:30px;font-weight:400;color:var(--cyan);text-shadow:var(--glow)}
+  .card .l{font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+  .card.warn .n{color:var(--warn)} .card.crit .n{color:var(--crit)} .card.gold .n{color:var(--gold)}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .toolbar .fld{flex:1;min-width:180px}
+  .muted{color:var(--dim);font-size:11px;letter-spacing:2px}
+
+  .tablewrap{background:var(--panel);border:1px solid var(--line-bright);border-radius:4px;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:840px}
+  th{background:var(--panel2);color:var(--cyan-dim);text-align:left;padding:12px 13px;
+    font-size:10px;letter-spacing:2px;text-transform:uppercase;position:sticky;top:0;
+    border-bottom:1px solid var(--line-bright)}
+  td{padding:12px 13px;border-top:1px solid var(--line);vertical-align:middle}
+  tr:hover td{background:rgba(40,231,240,.03)}
+  .id{font-family:'EOEHead','Share Tech Mono',monospace;color:var(--gold);font-size:13px;letter-spacing:1px}
+  .nama{font-weight:600}
+  .wl .w{color:var(--ok)} .wl .l{color:var(--crit)}
+  .gold-v{color:var(--gold)}
+  .pill{display:inline-block;padding:4px 10px;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:1px}
+  .pill.banned{background:rgba(255,77,94,.12);color:var(--crit);border:1px solid rgba(255,77,94,.4)}
+  .pill.reset{background:rgba(255,176,32,.1);color:var(--warn);border:1px solid rgba(255,176,32,.4)}
+  .pill.clean{background:rgba(46,230,166,.08);color:var(--ok);border:1px solid rgba(46,230,166,.3)}
+  .pill.rollback{background:rgba(255,107,61,.12);color:var(--coral);border:1px solid rgba(255,107,61,.4)}
+  .pill.marked{background:rgba(255,216,122,.1);color:var(--gold);border:1px solid rgba(255,216,122,.4)}
+  /* Judgment Ladder — tingkat bertingkat, warna naik keparahan */
+  .ladder{display:flex;gap:4px;flex-wrap:wrap}
+  .rung{padding:4px 8px;font-size:9px;border-radius:2px;cursor:pointer;letter-spacing:1px;font-weight:700;
+    background:transparent;border:1px solid var(--line);color:var(--dim);transition:all .12s}
+  .rung:hover{filter:brightness(1.3)}
+  .rung.watched:hover{border-color:var(--cyan);color:var(--cyan)}
+  .rung.marked:hover{border-color:var(--gold);color:var(--gold)}
+  .rung.cursed:hover{border-color:var(--coral);color:var(--coral)}
+  .rung.erased:hover{border-color:var(--crit);color:var(--crit)}
+  .rung.on-watched{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 6px rgba(40,231,240,.4)}
+  .rung.on-marked{border-color:var(--gold);color:var(--gold);box-shadow:0 0 6px rgba(255,216,122,.4)}
+  .rung.on-cursed{border-color:var(--coral);color:var(--coral);box-shadow:0 0 6px rgba(255,107,61,.4)}
+  .rung.on-erased{border-color:var(--crit);color:var(--crit);box-shadow:0 0 6px rgba(255,77,94,.4)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .mini{padding:6px 11px;font-size:10px;border-radius:2px;cursor:pointer;font-weight:700;letter-spacing:1px;background:transparent}
+  .mini.ban{color:var(--crit);border:1px solid rgba(255,77,94,.45)}
+  .mini.reset{color:var(--warn);border:1px solid rgba(255,176,32,.45)}
+  .mini.unban{color:var(--ok);border:1px solid rgba(46,230,166,.45)}
+  .mini:hover{filter:brightness(1.3);box-shadow:0 0 8px currentColor}
+  .npc-btn{background:none;border:1px solid var(--line-bright);color:var(--cyan);cursor:pointer;padding:4px 9px;border-radius:2px;font-size:11px}
+  .npc-detail{font-size:11px;color:var(--dim);padding:9px 13px;background:var(--bg);border-radius:2px;margin-top:6px;line-height:1.8;letter-spacing:.5px}
+
+  .hidden{display:none}
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--panel2);border:1px solid var(--cyan);color:var(--txt);
+    padding:13px 24px;border-radius:2px;font-size:12px;letter-spacing:1px;
+    opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;box-shadow:var(--glow)}
+  #toast.show{opacity:1}
+  footer{text-align:center;color:var(--dim);font-size:10px;margin-top:22px;line-height:2;letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box bracket">
+    <div class="kicker">EOE · MOD · SUITE · V1</div>
+    <h2>◈ ECHOES</h2>
+    <p>// PANEL MODERASI · MASUKKAN SANDI</p>
+    <input id="key" class="fld" type="password" placeholder="Sandi dashboard" style="margin-bottom:12px"
+           onkeydown="if(event.key==='Enter')login()">
+    <input id="url" class="fld" type="text" placeholder="URL /exec (sekali saja, tersimpan)"
+           style="margin-bottom:18px">
+    <button class="btn btn-cyan" style="width:100%" onclick="login()">► MASUK</button>
+    <p id="gate-err" style="color:var(--crit);margin-top:14px;margin-bottom:0;letter-spacing:1px"></p>
+  </div>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header class="bracket">
+    <div>
+      <h1>◈ ETERNAL ECHOES</h1>
+      <div class="tag">// PANEL MODERASI · SHA-256 HWID</div>
+    </div>
+    <div class="spacer"></div>
+    <span class="ver" id="ver">—</span>
+    <button class="btn btn-ghost" onclick="loadData()">⟳ MUAT ULANG</button>
+    <button class="btn btn-ghost" onclick="logout()">KELUAR</button>
+  </header>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="toolbar">
+    <input id="search" class="fld" placeholder="Cari Duelist ID / nama…" oninput="render()">
+    <select id="filter" class="fld" style="flex:0 0 auto;min-width:150px" onchange="render()">
+      <option value="all">Semua pemain</option>
+      <option value="banned">Hanya kena ban</option>
+      <option value="marked">Hanya ditandai (marked)</option>
+      <option value="reset">Hanya kena reset/erased</option>
+      <option value="rollback">Terdeteksi rollback</option>
+      <option value="clean">Bersih</option>
+    </select>
+    <select id="sort" class="fld" style="flex:0 0 auto;min-width:150px" onchange="render()">
+      <option value="updated">Terakhir aktif</option>
+      <option value="gold">Gold tertinggi</option>
+      <option value="wins">Wins tertinggi</option>
+    </select>
+    <span class="muted" id="count"></span>
+  </div>
+
+  <div class="tablewrap bracket">
+    <table>
+      <thead><tr>
+        <th>Status</th><th>Duelist ID</th><th>Nama</th><th>W / L</th>
+        <th>Gold</th><th>ANKH</th><th>NPC</th><th>Terakhir</th><th>Judgment Ladder</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    // DATA DARI GOOGLE SHEETS TELEMETRY · AKSI BAN/RESET LANGSUNG MENULIS KE TAB TERKAIT<br>
+    // CURSE DI DEVICE PEMAIN TETAP DIPULIHKAN LEWAT KODE UNBAN VER-4
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let API="",KEY="",DATA=null;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function login(){
+  const k=document.getElementById('key').value.trim();
+  const u=document.getElementById('url').value.trim()||sessionStorage.getItem('eoe_url')||"";
+  if(!k){document.getElementById('gate-err').textContent="Sandi kosong";return}
+  if(!u){document.getElementById('gate-err').textContent="URL /exec belum diisi";return}
+  KEY=k;API=u.replace(/\?.*$/,'');
+  sessionStorage.setItem('eoe_key',k);sessionStorage.setItem('eoe_url',API);
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  loadData();
+}
+function logout(){sessionStorage.removeItem('eoe_key');KEY="";DATA=null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('gate').classList.remove('hidden');}
+async function api(action,params={}){
+  const q=new URLSearchParams({key:KEY,action,...params});
+  const res=await fetch(API+"?"+q.toString());return res.json();
+}
+async function loadData(){
+  toast("Memuat data…");
+  try{
+    const d=await api("data");
+    if(!d.ok){if(d.err==="unauthorized"){toast("Sandi salah");logout();return}toast("Gagal: "+(d.err||"?"));return;}
+    DATA=d;document.getElementById('ver').textContent=d.ver||"";
+    renderCards();render();toast("Data dimuat — "+d.players.length+" pemain");
+  }catch(e){toast("Koneksi gagal — cek URL");}
+}
+function renderCards(){
+  const s=DATA.event_summary||{};const box=document.getElementById('cards');
+  const known=[
+    {l:'Total Event',v:DATA.total_events||0,cls:''},
+    {l:'Pemain',v:DATA.players.length,cls:'gold'},
+    {l:'Kena Ban',v:DATA.bans.length,cls:'crit'},
+    {l:'Kena Reset',v:DATA.resets.length,cls:'warn'},
+  ];
+  Object.entries(s).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([n,v])=>known.push({l:n,v,cls:''}));
+  box.innerHTML=known.map(c=>`<div class="card ${c.cls}"><div class="n">${c.v.toLocaleString('id')}</div><div class="l">${c.l}</div></div>`).join('');
+}
+function statusOf(p){
+  const nid=p.id.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(DATA.resets.some(r=>r.id===nid))return{cls:'reset',txt:'ERASED',tier:'erased'};
+  if(DATA.bans.some(b=>b.id===nid))return{cls:'banned',txt:'CURSED',tier:'cursed'};
+  if((DATA.marks||[]).some(m=>m.id===nid))return{cls:'marked',txt:'MARKED',tier:'marked'};
+  if((p.note||"").indexOf("ROLLBACK")===0)return{cls:'rollback',txt:'ROLLBACK',tier:'watched'};
+  return{cls:'clean',txt:'WATCHED',tier:'watched'};
+}
+function render(){
+  if(!DATA)return;
+  const q=document.getElementById('search').value.toUpperCase();
+  const f=document.getElementById('filter').value;const sort=document.getElementById('sort').value;
+  let list=DATA.players.slice().filter(p=>{
+    const st=statusOf(p);
+    if(f==='banned'&&st.txt!=='CURSED')return false;
+    if(f==='marked'&&st.txt!=='MARKED')return false;
+    if(f==='reset'&&st.txt!=='ERASED')return false;
+    if(f==='rollback'&&st.txt!=='ROLLBACK')return false;
+    if(f==='clean'&&st.txt!=='BERSIH')return false;
+    if(q&&!(p.id.toUpperCase().includes(q)||(p.nama||"").toUpperCase().includes(q)))return false;
+    return true;
+  });
+  list.sort((a,b)=>sort==='gold'?b.gold-a.gold:sort==='wins'?b.wins-a.wins:(b.updated||"").localeCompare(a.updated||""));
+  document.getElementById('count').textContent=list.length+" ditampilkan";
+  document.getElementById('rows').innerHTML=list.map((p,i)=>{
+    const st=statusOf(p);
+    const upd=(p.updated||"").replace('T',' ').replace(/\..*/,'').replace('Z','');
+    return `<tr>
+      <td><span class="pill ${st.cls}">${st.txt}</span></td>
+      <td class="id">${esc(p.id)}</td>
+      <td class="nama">${esc(p.nama||'—')}</td>
+      <td class="wl"><span class="w">${p.wins}W</span> / <span class="l">${p.losses}L</span></td>
+      <td class="gold-v">${(p.gold||0).toLocaleString('id')}</td>
+      <td>${p.ankh||0}</td>
+      <td>${p.npc_n?`<button class="npc-btn" onclick="toggleNpc(${i})">${p.npc_n} NPC ▾</button><div id="npc${i}" class="npc-detail hidden"></div>`:'—'}</td>
+      <td class="muted">${esc(upd)}</td>
+      <td><div class="ladder">
+        <button class="rung watched ${st.tier==='watched'?'on-watched':''}" onclick="setTier('watched','${esc(p.id)}')">WATCHED</button>
+        <button class="rung marked ${st.tier==='marked'?'on-marked':''}" onclick="setTier('marked','${esc(p.id)}')">MARKED</button>
+        <button class="rung cursed ${st.tier==='cursed'?'on-cursed':''}" onclick="setTier('cursed','${esc(p.id)}')">CURSED</button>
+        <button class="rung erased ${st.tier==='erased'?'on-erased':''}" onclick="setTier('erased','${esc(p.id)}')">ERASED</button>
+      </div></td></tr>`;
+  }).join('')||`<tr><td colspan="9" class="muted" style="text-align:center;padding:30px">// TIDAK ADA PEMAIN COCOK</td></tr>`;
+  window._list=list;
+}
+function toggleNpc(i){
+  const el=document.getElementById('npc'+i);if(!el)return;
+  if(!el.classList.contains('hidden')){el.classList.add('hidden');return}
+  let npc={};try{npc=JSON.parse(window._list[i].npc||"{}")}catch(e){}
+  const parts=Object.entries(npc).map(([n,wl])=>`<span style="color:var(--gold)">${esc(n)}</span> ${wl[0]}W/${wl[1]}L`);
+  el.innerHTML=parts.length?parts.join(' &nbsp;·&nbsp; '):'(kosong)';el.classList.remove('hidden');
+}
+// Judgment Ladder: tiap tingkat memetakan ke action server.
+//   watched -> unban (lepas dari daftar ban; tingkat dasar)
+//   marked  -> mark  (teguran halus)
+//   cursed  -> ban   (progres beku)
+//   erased  -> reset (reset + curse)
+async function setTier(tier,id){
+  const map={
+    watched:{action:'unban',confirm:`Turunkan ${id} ke WATCHED?\n(lepas dari daftar ban — curse di device tetap perlu kode UNBAN ver-4)`},
+    marked :{action:'mark', label:'MARKED', reasonDefault:'perilaku mencurigakan'},
+    cursed :{action:'ban',  label:'CURSED', reasonDefault:'exploit terverifikasi', confirm:`Kutuk ${id}? Progres pemain akan dibekukan.`},
+    erased :{action:'reset',label:'ERASED', reasonDefault:'exploit berat', confirm:`ERASE ${id}?\nProgres DIHAPUS lalu dikutuk. TIDAK bisa dibatalkan.`}
+  };
+  const cfg=map[tier];let reason="";
+  if(cfg.confirm){ if(!confirm(cfg.confirm))return; }
+  if(cfg.label){
+    reason=prompt(`Alasan ${cfg.label} untuk ${id}:`,cfg.reasonDefault);
+    if(reason===null)return;
+  }
+  toast(`${tier.toUpperCase()}…`);
+  const r=await api(cfg.action,{id,reason});
+  if(r.ok){toast(`${tier.toUpperCase()} diterapkan${r.removed!==undefined?` (${r.removed} baris)`:''}${r.note==='sudah_ada'?' — sudah ada':''}`);setTimeout(loadData,600);}
+  else{toast(`Gagal: ${r.err||'?'}`);}
+}
+function esc(s){return String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}
+window.onload=()=>{
+  const k=sessionStorage.getItem('eoe_key'),u=sessionStorage.getItem('eoe_url');
+  if(k&&u){document.getElementById('key').value=k;document.getElementById('url').value=u;login();}
+  else if(u){document.getElementById('url').value=u;}
+};
+</script>
+</body>
+</html>
