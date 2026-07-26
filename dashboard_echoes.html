@@ -190,7 +190,7 @@
     <table>
       <thead><tr>
         <th>Status</th><th>Duelist ID</th><th>Nama</th><th>W / L</th>
-        <th>Gold</th><th>ANKH</th><th>NPC</th><th>Terakhir</th><th>Judgment Ladder</th>
+        <th>Gold</th><th>ANKH</th><th>Kartu</th><th>NPC</th><th>Terakhir</th><th>Judgment Ladder</th>
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
@@ -279,6 +279,7 @@ function render(){
       <td class="wl"><span class="w">${p.wins}W</span> / <span class="l">${p.losses}L</span></td>
       <td class="gold-v">${(p.gold||0).toLocaleString('id')}</td>
       <td>${p.ankh||0}</td>
+      <td class="gold-v">${(p.cards||0).toLocaleString('id')}</td>
       <td>${p.npc_n?`<button class="npc-btn" onclick="toggleNpc(${i})">${p.npc_n} NPC ▾</button><div id="npc${i}" class="npc-detail hidden"></div>`:'—'}</td>
       <td class="muted">${esc(upd)}</td>
       <td><div class="ladder">
@@ -286,8 +287,9 @@ function render(){
         <button class="rung marked ${st.tier==='marked'?'on-marked':''}" onclick="setTier('marked','${esc(p.id)}')">MARKED</button>
         <button class="rung cursed ${st.tier==='cursed'?'on-cursed':''}" onclick="setTier('cursed','${esc(p.id)}')">CURSED</button>
         <button class="rung erased ${st.tier==='erased'?'on-erased':''}" onclick="setTier('erased','${esc(p.id)}')">ERASED</button>
+        <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doGrant('${esc(p.id)}')">🎁 HADIAH</button>
       </div></td></tr>`;
-  }).join('')||`<tr><td colspan="9" class="muted" style="text-align:center;padding:30px">// TIDAK ADA PEMAIN COCOK</td></tr>`;
+  }).join('')||`<tr><td colspan="10" class="muted" style="text-align:center;padding:30px">// TIDAK ADA PEMAIN COCOK</td></tr>`;
   window._list=list;
 }
 function toggleNpc(i){
@@ -302,6 +304,21 @@ function toggleNpc(i){
 //   marked  -> mark  (teguran halus)
 //   cursed  -> ban   (progres beku)
 //   erased  -> reset (reset + curse)
+// Hadiah giveaway: suntik gold/ankh lewat jalur RESMI (aman dari anti-cheat).
+async function doGrant(id){
+  const gold=prompt(`Berapa GOLD untuk ${id}? (0 kalau tidak)`, "0");
+  if(gold===null)return;
+  const ankh=prompt(`Berapa ANKH untuk ${id}? (0 kalau tidak)`, "0");
+  if(ankh===null)return;
+  const g=parseInt(gold)||0, a=parseInt(ankh)||0;
+  if(g<=0&&a<=0){toast("Nol — tidak ada yang diberikan");return}
+  if(!confirm(`Beri ${id}:\n+${g} gold, +${a} ankh?\n(diterima saat pemain online berikutnya)`))return;
+  toast("HADIAH…");
+  const r=await api("grant",{id,gold:g,ankh:a});
+  if(r.ok){toast(`Hadiah diantre: +${g} gold, +${a} ankh`);setTimeout(loadData,600);}
+  else{toast(`Gagal: ${r.err||'?'}`);}
+}
+
 async function setTier(tier,id){
   const map={
     watched:{action:'watched',confirm:`Turunkan ${id} ke WATCHED?\nMelepas MARK + BAN sekaligus.\n(curse yang sudah nempel di device tetap perlu kode UNBAN ver-4)`},
