@@ -304,6 +304,7 @@ function render(){
         <button class="rung marked ${st.tier==='marked'?'on-marked':''}" onclick="setTier('marked','${esc(p.id)}')">MARKED</button>
         <button class="rung cursed ${st.tier==='cursed'?'on-cursed':''}" onclick="setTier('cursed','${esc(p.id)}')">CURSED</button>
         <button class="rung erased ${st.tier==='erased'?'on-erased':''}" onclick="setTier('erased','${esc(p.id)}')">ERASED</button>
+        <button class="rung watched" style="border-color:var(--coral,#ff8c5e);color:var(--coral,#ff8c5e)" onclick="doUnban('${esc(p.id)}')">🔓 LEPAS CURSE</button>
         <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doGrant('${esc(p.id)}')">🎁 HADIAH</button>
       </div></td></tr>`;
   }).join('')||`<tr><td colspan="11" class="muted" style="text-align:center;padding:30px">// TIDAK ADA PEMAIN COCOK</td></tr>`;
@@ -335,7 +336,10 @@ function toggleNpc(i){
   el.innerHTML=parts.length?parts.join(' &nbsp;·&nbsp; '):'(kosong)';el.classList.remove('hidden');
 }
 // Judgment Ladder: tiap tingkat memetakan ke action server.
-//   watched -> unban (lepas dari daftar ban; tingkat dasar)
+//   watched -> unban (hapus dari DAFTAR ban di server; tingkat dasar)
+//                    CATATAN: tidak melepas curse yang sudah menempel di
+//                    device — untuk itu ada tombol terpisah 🔓 LEPAS CURSE
+//                    (action unban_device -> tab 'unbans').
 //   marked  -> mark  (teguran halus)
 //   cursed  -> ban   (progres beku)
 //   erased  -> reset (reset + curse)
@@ -354,9 +358,38 @@ async function doGrant(id){
   else{toast(`Gagal: ${r.err||'?'}`);}
 }
 
+/* LEPAS CURSE — menulis ke tab 'unbans' lewat action unban_device.
+
+   ⚠️ JANGAN KELIRU DENGAN "WATCHED". Watched cuma menghapus baris dari tab
+   'bans' supaya server berhenti mengirim verdict ban; curse yang SUDAH
+   menempel di device pemain tidak tersentuh. Dulu itu hanya bisa dilepas
+   dengan kode redeem ver-4 — dan ver-4 sekarang sudah dimatikan.
+
+   Tombol INI yang benar-benar membebaskan: klien membaca verdict.unban lalu
+   memanggil Global.telemetry_apply_remote_unban(). Baris 'bans' ikut
+   dibersihkan server supaya tidak saling menarik. */
+async function doUnban(id){
+  if(!confirm(`LEPAS CURSE untuk ${id}?\n\n`+
+              `• Curse dilepas, strike dinolkan, MARK dibersihkan\n`+
+              `• Gold dinormalkan (maks 5.000) — mencegah ledger mismatch\n`+
+              `• Cermin di luar folder game ikut dibersihkan\n`+
+              `• Baris di tab 'bans' ikut dihapus\n\n`+
+              `Diterapkan saat pemain ONLINE berikutnya.`))return;
+  const reason=prompt(`Alasan pembebasan ${id}:`,"false positive");
+  if(reason===null)return;
+  toast("LEPAS CURSE…");
+  const r=await api("unban_device",{id,reason});
+  if(r.ok){
+    toast(`Unban diantre untuk ${id}`+(r.removed?` (${r.removed} baris ban dihapus)`:''));
+    setTimeout(loadData,600);
+  } else {
+    toast(`Gagal: ${r.err||'?'}`);
+  }
+}
+
 async function setTier(tier,id){
   const map={
-    watched:{action:'watched',confirm:`Turunkan ${id} ke WATCHED?\nMelepas MARK + BAN sekaligus.\n(curse yang sudah nempel di device tetap perlu kode UNBAN ver-4)`},
+    watched:{action:'watched',confirm:`Turunkan ${id} ke WATCHED?\nMelepas MARK + BAN dari DAFTAR server.\n\nCatatan: ini TIDAK melepas curse yang sudah menempel di device.\nUntuk itu pakai tombol 🔓 LEPAS CURSE.`},
     marked :{action:'mark', label:'MARKED', reasonDefault:'perilaku mencurigakan'},
     cursed :{action:'ban',  label:'CURSED', reasonDefault:'exploit terverifikasi', confirm:`Kutuk ${id}? Progres pemain akan dibekukan.`},
     erased :{action:'reset',label:'ERASED', reasonDefault:'exploit berat', confirm:`ERASE ${id}?\nProgres DIHAPUS lalu dikutuk. TIDAK bisa dibatalkan.`}
