@@ -306,6 +306,9 @@ function render(){
         <button class="rung erased ${st.tier==='erased'?'on-erased':''}" onclick="setTier('erased','${esc(p.id)}')">ERASED</button>
         <button class="rung watched" style="border-color:var(--coral,#ff8c5e);color:var(--coral,#ff8c5e)" onclick="doUnban('${esc(p.id)}')">🔓 LEPAS CURSE</button>
         <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doGrant('${esc(p.id)}')">🎁 HADIAH</button>
+        <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doCard('${esc(p.id)}')">🃏 KARTU</button>
+        <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doUnlockAll('${esc(p.id)}')">📚 BUKA SEMUA</button>
+        ${antreanCell(p.id)}
       </div></td></tr>`;
   }).join('')||`<tr><td colspan="11" class="muted" style="text-align:center;padding:30px">// TIDAK ADA PEMAIN COCOK</td></tr>`;
   window._list=list;
@@ -385,6 +388,60 @@ async function doUnban(id){
   } else {
     toast(`Gagal: ${r.err||'?'}`);
   }
+}
+
+/* Hadiah KARTU — lewat unlock_card() di klien, jalur RESMI yang sama dengan
+   redeem, jadi ledger kartu ikut terurus dan anti-cheat tidak menuduh.
+   Kartu dewa DITOLAK klien: batas 1 kopi punya penjaga sendiri, dan memberi
+   dewa lewat hadiah akan menabrak gerbang kemenangan di EnemyDropSystem. */
+async function doCard(id){
+  const cid=prompt(`ID kartu untuk ${id}?\n(lihat CardDatabase.gd — kartu dewa 9000+ ditolak)`,"");
+  if(cid===null)return;
+  const c=parseInt(cid)||0;
+  if(c<=0){toast("ID kartu tidak valid");return}
+  const qty=prompt(`Berapa kopi? (1-3)`,"1");
+  if(qty===null)return;
+  const q=Math.max(1,Math.min(3,parseInt(qty)||1));
+  if(!confirm(`Beri ${id}:\nKartu ID ${c} x${q}?\n(diterima saat pemain online berikutnya)`))return;
+  toast("KARTU…");
+  const r=await api("cardgrant",{id,card_id:c,qty:q});
+  if(r.ok){toast(`Kartu diantre: ID ${c} x${q}`);setTimeout(loadData,600);}
+  else{toast(`Gagal: ${r.err||'?'}`);}
+}
+
+/* BUKA SEMUA KARTU — pengganti kode redeem ver-5 yang sudah dimatikan.
+   Kartu dewa DILEWATI, sama seperti jalur ver-5 dulu. Itu juga yang menjaga
+   hasilnya tetap di bawah plafon anti-cheat (jumlah_kartu x 3 + 60). */
+async function doUnlockAll(id){
+  if(!confirm(`BUKA SEMUA KARTU untuk ${id}?\n\n`+
+              `• Semua kartu non-dewa dibuka penuh (3 kopi)\n`+
+              `• Kartu dewa TIDAK ikut dibuka\n`+
+              `• Ledger kartu di-resync otomatis\n\n`+
+              `Diterapkan saat pemain ONLINE berikutnya.`))return;
+  const reason=prompt(`Alasan untuk ${id}:`,"hadiah event");
+  if(reason===null)return;
+  toast("BUKA SEMUA…");
+  const r=await api("unlockall",{id,reason});
+  if(r.ok){toast(`Buka-semua diantre untuk ${id}`);setTimeout(loadData,600);}
+  else{toast(`Gagal: ${r.err||'?'}`);}
+}
+
+/* Penanda ANTREAN: menjawab pertanyaan "hadiahnya sudah sampai belum?".
+   Server menandai kolom status tiap tab saat perintah benar-benar dikirim ke
+   klien, jadi ⏳ = pemain belum online sejak kamu menekan tombolnya. */
+function antreanCell(id){
+  const rows=(DATA.antrean||[]).filter(a=>a.id===String(id).replace(/[^A-Z0-9]/gi,'').toUpperCase());
+  if(!rows.length)return '';
+  const tunggu=rows.filter(a=>!a.sampai);
+  const sampai=rows.filter(a=>a.sampai);
+  let out='<div style="margin-top:6px;font-size:10px;line-height:1.5">';
+  if(tunggu.length){
+    out+=`<div style="color:#ffb347">⏳ MENUNGGU: ${tunggu.map(a=>esc(a.jenis+(a.info?' '+a.info:''))).join(', ')}</div>`;
+  }
+  if(sampai.length){
+    out+=`<div style="color:#5fe08a">✔ SAMPAI: ${sampai.slice(-3).map(a=>esc(a.jenis)).join(', ')}</div>`;
+  }
+  return out+'</div>';
 }
 
 async function setTier(tier,id){
