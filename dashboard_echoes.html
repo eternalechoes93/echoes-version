@@ -392,17 +392,24 @@ async function doUnban(id){
 
 /* Hadiah KARTU — lewat unlock_card() di klien, jalur RESMI yang sama dengan
    redeem, jadi ledger kartu ikut terurus dan anti-cheat tidak menuduh.
-   Kartu dewa DITOLAK klien: batas 1 kopi punya penjaga sendiri, dan memberi
-   dewa lewat hadiah akan menabrak gerbang kemenangan di EnemyDropSystem. */
+
+   KARTU DEWA (9000-9003) BOLEH diberikan — dijual ke pemain. Tapi klien
+   MEMAKSA jumlahnya jadi 1, dan melewati pemain yang sudah punya. Itu bukan
+   pilihan gaya: pemeriksa dompet AC menjatuhkan curse SEKETIKA kalau dewa di
+   dompet lebih dari 1 kopi (god_card_overflow = _MAX_STRIKES). */
 async function doCard(id){
-  const cid=prompt(`ID kartu untuk ${id}?\n(lihat CardDatabase.gd — kartu dewa 9000+ ditolak)`,"");
+  const cid=prompt(`ID kartu untuk ${id}?\n\nDewa: 9000 Obelisk · 9001 Slifer · 9002 Ra · 9003 Horakhty\n(dewa otomatis dibatasi 1 kopi)`,"");
   if(cid===null)return;
   const c=parseInt(cid)||0;
   if(c<=0){toast("ID kartu tidak valid");return}
-  const qty=prompt(`Berapa kopi? (1-3)`,"1");
-  if(qty===null)return;
-  const q=Math.max(1,Math.min(3,parseInt(qty)||1));
-  if(!confirm(`Beri ${id}:\nKartu ID ${c} x${q}?\n(diterima saat pemain online berikutnya)`))return;
+  const isGod = c>=9000;
+  let q=1;
+  if(!isGod){
+    const qty=prompt(`Berapa kopi? (1-3)`,"1");
+    if(qty===null)return;
+    q=Math.max(1,Math.min(3,parseInt(qty)||1));
+  }
+  if(!confirm(`Beri ${id}:\nKartu ID ${c} x${q}${isGod?"  ⚡ KARTU DEWA (maks 1 kopi)":""}?\n(diterima saat pemain online berikutnya)`))return;
   toast("KARTU…");
   const r=await api("cardgrant",{id,card_id:c,qty:q});
   if(r.ok){toast(`Kartu diantre: ID ${c} x${q}`);setTimeout(loadData,600);}
