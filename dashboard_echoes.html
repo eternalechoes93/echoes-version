@@ -306,6 +306,7 @@ function render(){
         <button class="rung erased ${st.tier==='erased'?'on-erased':''}" onclick="setTier('erased','${esc(p.id)}')">ERASED</button>
         <button class="rung watched" style="border-color:var(--coral,#ff8c5e);color:var(--coral,#ff8c5e)" onclick="doUnban('${esc(p.id)}')">🔓 LEPAS CURSE</button>
         <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doGrant('${esc(p.id)}')">🎁 HADIAH</button>
+        <button class="rung watched" style="border-color:#ffb347;color:#ffb347" onclick="doScarab('${esc(p.id)}')">❖ SCARAB</button>
         <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doCard('${esc(p.id)}')">🃏 KARTU</button>
         <button class="rung watched" style="border-color:var(--cyan);color:var(--cyan)" onclick="doUnlockAll('${esc(p.id)}')">📚 BUKA SEMUA</button>
         ${antreanCell(p.id)}
@@ -388,6 +389,26 @@ async function doUnban(id){
   } else {
     toast(`Gagal: ${r.err||'?'}`);
   }
+}
+
+/* SCARAB ❖ — mata uang premium BARU, pengganti ANKH.
+
+   ⚠️ TAB 'scarab' DI SPREADSHEET ADALAH BUKU BESAR RESMINYA. Klien tidak punya
+   jalan lain menambah saldo (tidak dari duel, drop, atau redeem offline), jadi
+   jumlah seluruh baris di tab itu HARUS sama dengan yang dilaporkan device.
+   Itulah yang membuat saldo SCARAB bisa dibuktikan — dan itu juga berarti
+   JANGAN pernah menghapus baris di tab 'scarab', karena dia satu-satunya
+   catatan pembanding. Server otomatis menulis ke tab 'anomali' kalau tidak cocok. */
+async function doScarab(id){
+  const amt=prompt(`Beri SCARAB ❖ ke ${id}?\n\nJumlah:`,"500");
+  if(amt===null)return;
+  const n=parseInt(amt)||0;
+  if(n<=0){toast("Jumlah tidak valid");return}
+  if(!confirm(`Beri ${id}:\n${n} SCARAB ❖?\n\nDiterima saat pemain online berikutnya.`))return;
+  toast("SCARAB…");
+  const r=await api("scarab",{id,amount:n});
+  if(r.ok){toast(`${n} SCARAB diantre untuk ${id}`);setTimeout(loadData,600);}
+  else{toast(`Gagal: ${r.err||'?'}`);}
 }
 
 /* Hadiah KARTU — lewat unlock_card() di klien, jalur RESMI yang sama dengan
