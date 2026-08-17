@@ -195,6 +195,7 @@
       <option value="gold">Gold tertinggi</option>
       <option value="wins">Wins tertinggi</option>
       <option value="arsip">Arsip terlengkap</option>
+      <option value="scarab">Scarab terbanyak</option>
     </select>
     <span class="muted" id="count"></span>
   </div>
@@ -203,7 +204,7 @@
     <table>
       <thead><tr>
         <th>Status</th><th>Duelist ID</th><th>Nama</th><th>W / L</th>
-        <th>Gold</th><th>ANKH</th><th>Kartu</th><th>Arsip</th><th>NPC</th><th>Terakhir</th><th>Judgment Ladder</th>
+        <th>Gold</th><th>SCARAB</th><th>Kartu</th><th>Arsip</th><th>NPC</th><th>Terakhir</th><th>Judgment Ladder</th>
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
@@ -283,6 +284,7 @@ function render(){
   list.sort((a,b)=>sort==='gold'?b.gold-a.gold
                  :sort==='wins'?b.wins-a.wins
                  :sort==='arsip'?(Number(b.cards_uniq||0)-Number(a.cards_uniq||0))
+                 :sort==='scarab'?(Number(b.scarab||0)-Number(a.scarab||0))
                  :(b.updated||"").localeCompare(a.updated||""));
   document.getElementById('count').textContent=list.length+" ditampilkan";
   document.getElementById('rows').innerHTML=list.map((p,i)=>{
@@ -294,7 +296,7 @@ function render(){
       <td class="nama">${esc(p.nama||'—')}</td>
       <td class="wl"><span class="w">${p.wins}W</span> / <span class="l">${p.losses}L</span></td>
       <td class="gold-v">${(p.gold||0).toLocaleString('id')}</td>
-      <td>${p.ankh||0}</td>
+      <td>${scarabCell(p)}</td>
       <td class="gold-v">${(p.cards||0).toLocaleString('id')}</td>
       <td>${arsipCell(p)}</td>
       <td>${p.npc_n?`<button class="npc-btn" onclick="toggleNpc(${i})">${p.npc_n} NPC ▾</button><div id="npc${i}" class="npc-detail hidden"></div>`:'—'}</td>
@@ -330,6 +332,21 @@ function arsipCell(p){
     <span class="arsip-bar"><i style="width:${pct}%"></i></span>
     <span class="pct">${pct}%${full?' &middot; PENUH':''}</span>
   </div>`;
+}
+
+/* Sel SCARAB. Menampilkan saldo saat ini + total yang PERNAH diberikan server
+   (mis. "40 / 50 ❖") — dua angka ini yang jadi dasar deteksi anomali
+   scarab_granted_palsu/scarab_saldo_mustahil di _detectClientMods. Kalau
+   granted 0 (belum pernah dapat SCARAB sama sekali) tampil "—", bukan "0/0".
+   Saldo lebih kecil dari granted itu WAJAR (sudah dibelanjakan) — hanya
+   ditandai kalau saldo > granted (harusnya mustahil, AC sudah menahannya
+   duluan di client, tapi kalau lolos tetap kelihatan di sini berwarna merah). */
+function scarabCell(p){
+  const s = Number(p.scarab||0);
+  const g = Number(p.scarab_granted||0);
+  if(!g) return '<span class="muted">&mdash;</span>';
+  const bad = s > g;
+  return `<span class="gold-v"${bad?' style="color:#ff6b6b"':''}>${s.toLocaleString('id')}</span><span class="muted"> / ${g.toLocaleString('id')} ❖</span>`;
 }
 
 function toggleNpc(i){
